@@ -1,0 +1,54 @@
+.gh-remark-badge {
+  display: inline;
+  max-width: 220px;
+  margin-left: 6px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #24292f;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.4;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gh-remark-badge.gh-remark-badge--empty {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 8px;
+  padding: 1px 6px;
+  border: 1px dashed #8c959f;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #57606a;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.gh-remark-badge.gh-remark-badge--empty:hover {
+  background: #f6f8fa;
+}
+
+[role="option"] .prc-ActionList-ItemDescriptionWrap-ujC8S {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+}
+
+[role="option"] .prc-ActionList-ActionListSubContent-gKsFp {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+[role="option"] .gh-remark-badge {
+  margin-left: 0;
+  margin-top: 1px;
+  max-width: 220px;
+}

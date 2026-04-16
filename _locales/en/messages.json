@@ -1,0 +1,160 @@
+{
+  "extName": {
+    "message": "GitHub Organization User Notes"
+  },
+  "extDescription": {
+    "message": "Add remarks to GitHub users across organization members, project user displays, and organization settings user lists."
+  },
+  "popupTitle": {
+    "message": "GitHub Organization User Notes"
+  },
+  "popupHeading": {
+    "message": "GitHub Organization User Notes"
+  },
+  "labelLogin": {
+    "message": "GitHub Username"
+  },
+  "labelRemark": {
+    "message": "Remark"
+  },
+  "placeholderLogin": {
+    "message": "e.g. octocat"
+  },
+  "placeholderRemark": {
+    "message": "e.g. Frontend Owner"
+  },
+  "saveRemark": {
+    "message": "Save"
+  },
+  "clearInputs": {
+    "message": "Clear"
+  },
+  "exportJson": {
+    "message": "Export JSON"
+  },
+  "importJson": {
+    "message": "Import JSON"
+  },
+  "savedRemarks": {
+    "message": "Saved Remarks"
+  },
+  "languageLabel": {
+    "message": "Language"
+  },
+  "languageAuto": {
+    "message": "Auto"
+  },
+  "languageEnglish": {
+    "message": "English"
+  },
+  "languageChinese": {
+    "message": "Chinese (Simplified)"
+  },
+  "noNotesYet": {
+    "message": "No remarks yet. Add one to get started."
+  },
+  "edit": {
+    "message": "Edit"
+  },
+  "delete": {
+    "message": "Delete"
+  },
+  "invalidLogin": {
+    "message": "Please enter a valid GitHub username"
+  },
+  "requiredRemark": {
+    "message": "Please enter a remark"
+  },
+  "savedStatus": {
+    "message": "Saved remark for @$LOGIN$",
+    "placeholders": {
+      "login": {
+        "content": "$1"
+      }
+    }
+  },
+  "deletedStatus": {
+    "message": "Deleted remark for @$LOGIN$",
+    "placeholders": {
+      "login": {
+        "content": "$1"
+      }
+    }
+  },
+  "exportedStatus": {
+    "message": "Exported $COUNT$ remarks",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "importInvalidJson": {
+    "message": "Import failed: invalid JSON file"
+  },
+  "importNoValidData": {
+    "message": "Import failed: no valid remark data found"
+  },
+  "importedStatus": {
+    "message": "Imported $COUNT$ remarks (merged)",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "promptEditRemark": {
+    "message": "Edit remark for @$LOGIN$ (leave empty to delete)",
+    "placeholders": {
+      "login": {
+        "content": "$1"
+      }
+    }
+  },
+  "promptAddRemark": {
+    "message": "Add remark for @$LOGIN$",
+    "placeholders": {
+      "login": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeAddRemark": {
+    "message": "+Remark"
+  },
+  "badgeAddTitle": {
+    "message": "Add remark for @$LOGIN$",
+    "placeholders": {
+      "login": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeEditTitle": {
+    "message": "Click to edit remark for @$LOGIN$",
+    "placeholders": {
+      "login": {
+        "content": "$1"
+      }
+    }
+  },
+  "titleWithRemark": {
+    "message": "@$LOGIN$ ($REMARK$)",
+    "placeholders": {
+      "login": {
+        "content": "$1"
+      },
+      "remark": {
+        "content": "$2"
+      }
+    }
+  },
+  "titleWithoutRemark": {
+    "message": "@$LOGIN$",
+    "placeholders": {
+      "login": {
+        "content": "$1"
+      }
+    }
+  }
+}

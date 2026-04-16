@@ -1,0 +1,160 @@
+{
+  "extName": {
+    "message": "Github 组织用户备注"
+  },
+  "extDescription": {
+    "message": "给 GitHub 用户添加备注，覆盖组织成员、项目用户展示和组织设置中的用户列表。"
+  },
+  "popupTitle": {
+    "message": "Github 组织用户备注"
+  },
+  "popupHeading": {
+    "message": "Github 组织用户备注"
+  },
+  "labelLogin": {
+    "message": "GitHub 用户名"
+  },
+  "labelRemark": {
+    "message": "备注名"
+  },
+  "placeholderLogin": {
+    "message": "例如: octocat"
+  },
+  "placeholderRemark": {
+    "message": "例如: 前端负责人"
+  },
+  "saveRemark": {
+    "message": "保存备注"
+  },
+  "clearInputs": {
+    "message": "清空输入"
+  },
+  "exportJson": {
+    "message": "导出 JSON"
+  },
+  "importJson": {
+    "message": "导入 JSON"
+  },
+  "savedRemarks": {
+    "message": "已保存备注"
+  },
+  "languageLabel": {
+    "message": "语言"
+  },
+  "languageAuto": {
+    "message": "自动"
+  },
+  "languageEnglish": {
+    "message": "English"
+  },
+  "languageChinese": {
+    "message": "中文"
+  },
+  "noNotesYet": {
+    "message": "还没有备注，先新增一条吧。"
+  },
+  "edit": {
+    "message": "编辑"
+  },
+  "delete": {
+    "message": "删除"
+  },
+  "invalidLogin": {
+    "message": "请输入有效的 GitHub 用户名"
+  },
+  "requiredRemark": {
+    "message": "请输入备注名"
+  },
+  "savedStatus": {
+    "message": "已保存 @$LOGIN$ 的备注",
+    "placeholders": {
+      "login": {
+        "content": "$1"
+      }
+    }
+  },
+  "deletedStatus": {
+    "message": "已删除 @$LOGIN$ 的备注",
+    "placeholders": {
+      "login": {
+        "content": "$1"
+      }
+    }
+  },
+  "exportedStatus": {
+    "message": "已导出 $COUNT$ 条备注",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "importInvalidJson": {
+    "message": "导入失败：JSON 文件格式错误"
+  },
+  "importNoValidData": {
+    "message": "导入失败：未识别到有效备注数据"
+  },
+  "importedStatus": {
+    "message": "已导入 $COUNT$ 条备注（已合并）",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "promptEditRemark": {
+    "message": "编辑 @$LOGIN$ 的备注（留空删除）",
+    "placeholders": {
+      "login": {
+        "content": "$1"
+      }
+    }
+  },
+  "promptAddRemark": {
+    "message": "给 @$LOGIN$ 添加备注",
+    "placeholders": {
+      "login": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeAddRemark": {
+    "message": "+备注"
+  },
+  "badgeAddTitle": {
+    "message": "给 @$LOGIN$ 添加备注",
+    "placeholders": {
+      "login": {
+        "content": "$1"
+      }
+    }
+  },
+  "badgeEditTitle": {
+    "message": "点击编辑 @$LOGIN$ 的备注",
+    "placeholders": {
+      "login": {
+        "content": "$1"
+      }
+    }
+  },
+  "titleWithRemark": {
+    "message": "@$LOGIN$ ($REMARK$)",
+    "placeholders": {
+      "login": {
+        "content": "$1"
+      },
+      "remark": {
+        "content": "$2"
+      }
+    }
+  },
+  "titleWithoutRemark": {
+    "message": "@$LOGIN$",
+    "placeholders": {
+      "login": {
+        "content": "$1"
+      }
+    }
+  }
+}

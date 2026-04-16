@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title data-i18n="popupTitle">GitHub Remarks</title>
+    <link rel="stylesheet" href="./popup.css" />
+  </head>
+  <body>
+    <main class="wrap">
+      <div class="topbar">
+        <h1 data-i18n="popupHeading">GitHub User Remarks</h1>
+        <button id="locale-toggle-btn" type="button" class="locale-toggle" title="Switch language">
+          <span class="locale-icon" aria-hidden="true"></span>
+          <span id="locale-toggle-text">EN</span>
+        </button>
+      </div>
+      <form id="remark-form">
+        <label>
+          <span data-i18n="labelLogin">GitHub Username</span>
+          <input
+            id="login"
+            type="text"
+            placeholder="e.g. octocat"
+            data-i18n-placeholder="placeholderLogin"
+            autocomplete="off"
+            required
+          />
+        </label>
+        <label>
+          <span data-i18n="labelRemark">Remark</span>
+          <input
+            id="remark"
+            type="text"
+            placeholder="e.g. Frontend Owner"
+            data-i18n-placeholder="placeholderRemark"
+            autocomplete="off"
+            required
+          />
+        </label>
+        <div class="actions">
+          <button type="submit" data-i18n="saveRemark">Save</button>
+          <button id="clear-btn" type="button" class="secondary" data-i18n="clearInputs">Clear</button>
+        </div>
+      </form>
+
+      <p id="status" role="status" aria-live="polite"></p>
+      <div class="data-tools">
+        <button id="export-btn" type="button" class="secondary" data-i18n="exportJson">Export JSON</button>
+        <button id="import-btn" type="button" class="secondary" data-i18n="importJson">Import JSON</button>
+        <input id="import-file" type="file" accept="application/json,.json" hidden />
+      </div>
+
+      <section>
+        <h2 data-i18n="savedRemarks">Saved Remarks</h2>
+        <ul id="note-list"></ul>
+      </section>
+    </main>
+
+    <script src="./popup.js"></script>
+  </body>
+</html>
