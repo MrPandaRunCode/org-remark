@@ -63,6 +63,9 @@
   let scanScheduled = false;
   let localeOverride = "en";
   let localeMessages = null;
+  let extensionContextValid = true;
+  let mutationObserver = null;
+  let storageChangeListener = null;
   const SUPPORTED_PATH_PATTERNS = [
     /^\/orgs\/[^/]+\/people(?:\/.*)?$/i,
     /^\/orgs\/[^/]+\/projects(?:\/.*)?$/i
@@ -97,9 +100,18 @@
     return "en";
   }
 
+  function isInvalidExtensionResourceUrl(url) {
+    return !url || /^chrome-extension:\/\/invalid\/?$/i.test(String(url));
+  }
+
   async function loadLocaleMessages(locale) {
     try {
-      const url = chrome.runtime.getURL(`_locales/${locale}/messages.json`);
+      const url = safeChromeCall(() => chrome.runtime.getURL(`_locales/${locale}/messages.json`), "");
+      if (isInvalidExtensionResourceUrl(url)) {
+        handleExtensionContextError(new Error("Extension context invalidated"));
+        return null;
+      }
+
       const response = await fetch(url);
       if (!response.ok) {
         return null;
@@ -140,8 +152,97 @@
     return text;
   }
 
+  function handleExtensionContextError(error) {
+    if (!error) {
+      return;
+    }
+
+    const message = String(error && error.message ? error.message : error);
+    if (!/extension context invalidated/i.test(message)) {
+      return;
+    }
+
+    extensionContextValid = false;
+    scanScheduled = false;
+
+    if (mutationObserver) {
+      mutationObserver.disconnect();
+      mutationObserver = null;
+    }
+
+    if (storageChangeListener) {
+      try {
+        chrome.storage.onChanged.removeListener(storageChangeListener);
+      } catch (_error) {
+        // Ignore cleanup failures after context invalidation.
+      }
+      storageChangeListener = null;
+    }
+
+    cleanupInjectedBadges();
+  }
+
+  function isExtensionContextInvalidatedError(error) {
+    if (!error) {
+      return false;
+    }
+
+    const message = String(error && error.message ? error.message : error);
+    return /extension context invalidated/i.test(message);
+  }
+
+  function safeChromeCall(callback, fallbackValue) {
+    if (!extensionContextValid) {
+      return fallbackValue;
+    }
+
+    try {
+      return callback();
+    } catch (error) {
+      handleExtensionContextError(error);
+      return fallbackValue;
+    }
+  }
+
+  function runSafely(callback, fallbackValue) {
+    if (!extensionContextValid) {
+      return fallbackValue;
+    }
+
+    try {
+      return callback();
+    } catch (error) {
+      handleExtensionContextError(error);
+      if (isExtensionContextInvalidatedError(error)) {
+        return fallbackValue;
+      }
+      throw error;
+    }
+  }
+
+  async function runSafelyAsync(callback, fallbackValue) {
+    if (!extensionContextValid) {
+      return fallbackValue;
+    }
+
+    try {
+      return await callback();
+    } catch (error) {
+      handleExtensionContextError(error);
+      if (isExtensionContextInvalidatedError(error)) {
+        return fallbackValue;
+      }
+      throw error;
+    }
+  }
+
   async function refreshLocaleResources() {
     const resolvedLocale = localeOverride === "auto" ? resolveAutoLocale() : localeOverride;
+    if (resolvedLocale === "en") {
+      localeMessages = null;
+      return;
+    }
+
     localeMessages = await loadLocaleMessages(resolvedLocale);
   }
 
@@ -152,7 +253,7 @@
       return fromForced;
     }
 
-    const message = chrome.i18n.getMessage(key, substitutions);
+    const message = safeChromeCall(() => chrome.i18n.getMessage(key, substitutions), "");
     return message || key;
   }
 
@@ -429,30 +530,157 @@
     return extractLoginFromElementData(source);
   }
 
-  function chooseRenderNode(source) {
+  function isIssuePanePage() {
+    return isSupportedPage() && new URLSearchParams(window.location.search).get("pane") === "issue";
+  }
+
+  function hasRenderableText(node) {
+    return Boolean(node instanceof HTMLElement && String(node.textContent || "").trim());
+  }
+
+  function isAvatarLikeElement(element) {
+    if (!(element instanceof HTMLElement)) {
+      return false;
+    }
+
+    if (
+      element.matches(
+        "img, [data-avatar-url], [data-testid*='avatar'], .avatar, .AvatarStack, [class*='avatar'], [class*='Avatar']"
+      )
+    ) {
+      return true;
+    }
+
+    return Boolean(
+      element.closest(
+        "[data-avatar-url], [data-testid*='avatar'], .avatar, .AvatarStack, [class*='avatar'], [class*='Avatar']"
+      )
+    );
+  }
+
+  function isIssueDetailContext(element) {
+    if (!(element instanceof HTMLElement) || !isIssuePanePage()) {
+      return false;
+    }
+
+    return Boolean(
+      element.closest(
+        ".TimelineItem, .js-timeline-item, article, [data-testid*='issue-body'], [data-testid*='comment-viewer'], [aria-label='Assignees'], [aria-labelledby*='assignee'], [data-testid*='assignee']"
+      )
+    );
+  }
+
+  function isIssueTimelineGutterElement(element) {
+    if (!(element instanceof HTMLElement) || !isIssuePanePage()) {
+      return false;
+    }
+
+    return Boolean(
+      element.closest(
+        ".TimelineItem-avatar, .TimelineItem-badge, .TimelineItem-break, [class*='TimelineItem-avatar'], [class*='TimelineItem-badge'], [class*='TimelineItem-break'], .timeline-comment-avatar, [class*='Avatar-module__avatarOuter__']"
+      )
+    );
+  }
+
+  function isIssueViewerLeadingAvatarElement(element) {
+    if (!(element instanceof HTMLElement) || !isIssuePanePage()) {
+      return false;
+    }
+
+    const viewerContainer = element.closest(
+      "[data-testid='issue-viewer-issue-container'], [data-testid*='comment-viewer']"
+    );
+    if (!(viewerContainer instanceof HTMLElement)) {
+      return false;
+    }
+
+    if (
+      element.closest(
+        "[data-testid='issue-body'], [data-testid='issue-body-viewer'], [data-testid='issue-body-header-author']"
+      )
+    ) {
+      return false;
+    }
+
+    if (isAvatarLikeElement(element)) {
+      return true;
+    }
+
+    return Boolean(
+      element.closest(
+        "[class*='Avatar-module__avatarOuter__'], [class*='Avatar-module__avatarLink__'], [class*='Avatar-module__avatarInner__']"
+      )
+    );
+  }
+
+  function findPreferredTextNode(source, login) {
+    if (!(source instanceof HTMLElement) || !login) {
+      return null;
+    }
+
+    const boundary = source.closest(
+      "[data-testid='issue-viewer-issue-container'], [data-testid='comment-viewer'], [aria-label='Assignees'], [aria-labelledby*='assignee'], [data-testid*='assignee'], [login], [role='option'], li, tr, article, .TimelineItem, .Box-row, .member-list-item, .js-member-list-item, section"
+    );
+    if (!(boundary instanceof HTMLElement)) {
+      return null;
+    }
+
+    const candidates = boundary.querySelectorAll(
+      "[data-testid='issue-body-header-author'], .prc-ActionList-ItemLabel-81ohH, [id$='--label'], [class*='slicer-items-module__title'], a[href], button, strong, span"
+    );
+
+    for (const candidate of candidates) {
+      if (!(candidate instanceof HTMLElement) || candidate === source || !hasRenderableText(candidate)) {
+        continue;
+      }
+
+      if (isIssueTimelineGutterElement(candidate)) {
+        continue;
+      }
+
+      if (isIssueViewerLeadingAvatarElement(candidate)) {
+        continue;
+      }
+
+      if (extractLoginFromSource(candidate) !== login) {
+        continue;
+      }
+
+      return candidate;
+    }
+
+    return null;
+  }
+
+  function chooseRenderNode(source, login) {
     if (!(source instanceof HTMLElement)) {
       return null;
     }
 
     if (source.hasAttribute("login")) {
-      const descriptionWrapInItem = source.querySelector(".prc-ActionList-ItemDescriptionWrap-ujC8S");
-      if (descriptionWrapInItem instanceof HTMLElement) {
-        return descriptionWrapInItem;
-      }
-
       const labelInItem = source.querySelector(
         ".prc-ActionList-ItemLabel-81ohH, [id$='--label'], [class*='slicer-items-module__title']"
       );
       if (labelInItem instanceof HTMLElement) {
         return labelInItem;
       }
+
+      const descriptionWrapInItem = source.querySelector(".prc-ActionList-ItemDescriptionWrap-ujC8S");
+      if (descriptionWrapInItem instanceof HTMLElement && hasRenderableText(descriptionWrapInItem)) {
+        return descriptionWrapInItem;
+      }
     }
 
-    if (source.matches("a, button, span, img, strong")) {
+    const preferredTextNode = findPreferredTextNode(source, login);
+    if (preferredTextNode instanceof HTMLElement) {
+      return preferredTextNode;
+    }
+
+    if (source.matches("a, button, span, strong, img")) {
       return source;
     }
 
-    const preferred = source.querySelector("a[href], button, span, img");
+    const preferred = source.querySelector("a[href], button, strong, span, img");
     if (preferred instanceof HTMLElement) {
       return preferred;
     }
@@ -460,9 +688,58 @@
     return source;
   }
 
+  function shouldSkipRenderNode(source, node, login) {
+    if (!(node instanceof HTMLElement)) {
+      return true;
+    }
+
+    if (!isIssueDetailContext(node)) {
+      return false;
+    }
+
+    if (isIssueTimelineGutterElement(source) || isIssueTimelineGutterElement(node)) {
+      return true;
+    }
+
+    if (isIssueViewerLeadingAvatarElement(source) || isIssueViewerLeadingAvatarElement(node)) {
+      return true;
+    }
+
+    if (source instanceof HTMLImageElement || node.matches("img")) {
+      return true;
+    }
+
+    if (isAvatarLikeElement(node) && !hasRenderableText(node)) {
+      return true;
+    }
+
+    if (!hasRenderableText(node)) {
+      const preferredTextNode = findPreferredTextNode(source, login);
+      if (preferredTextNode instanceof HTMLElement) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   function getRenderScope(node) {
     if (!(node instanceof HTMLElement)) {
       return null;
+    }
+
+    const issueSidebarField = node.closest(
+      "[aria-label='Assignees'], [aria-labelledby*='assignee'], [data-testid*='assignee']"
+    );
+    if (issueSidebarField instanceof HTMLElement) {
+      return issueSidebarField;
+    }
+
+    const issueDiscussionItem = node.closest(
+      ".TimelineItem, .js-timeline-item, article, [data-testid*='issue-body'], [data-testid*='comment-viewer']"
+    );
+    if (issueDiscussionItem instanceof HTMLElement) {
+      return issueDiscussionItem;
     }
 
     return (
@@ -557,10 +834,17 @@
   }
 
   function scanAndRender() {
+    if (!extensionContextValid) {
+      cleanupInjectedBadges();
+      return;
+    }
+
     if (!isSupportedPage()) {
       cleanupInjectedBadges();
       return;
     }
+
+    cleanupInjectedBadges();
 
     const processedNodes = new WeakSet();
     const renderedByScope = new WeakMap();
@@ -573,8 +857,12 @@
           return;
         }
 
-        const node = chooseRenderNode(source);
+        const node = chooseRenderNode(source, login);
         if (!(node instanceof HTMLElement) || processedNodes.has(node)) {
+          return;
+        }
+
+        if (shouldSkipRenderNode(source, node, login)) {
           return;
         }
 
@@ -604,30 +892,46 @@
   }
 
   function scheduleScan() {
-    if (scanScheduled) {
+    if (!extensionContextValid || scanScheduled) {
       return;
     }
 
     scanScheduled = true;
     window.requestAnimationFrame(() => {
       scanScheduled = false;
-      scanAndRender();
+      runSafely(() => {
+        scanAndRender();
+      });
     });
   }
 
   function getAllNotes() {
     return new Promise((resolve) => {
-      chrome.storage.sync.get({ notes: {} }, (result) => {
-        resolve(result.notes || {});
-      });
+      const didStart = safeChromeCall(() => {
+        chrome.storage.sync.get({ notes: {} }, (result) => {
+          resolve(result.notes || {});
+        });
+        return true;
+      }, false);
+
+      if (!didStart) {
+        resolve({});
+      }
     });
   }
 
   function setAllNotes(nextNotes) {
     return new Promise((resolve) => {
-      chrome.storage.sync.set({ notes: nextNotes }, () => {
+      const didStart = safeChromeCall(() => {
+        chrome.storage.sync.set({ notes: nextNotes }, () => {
+          resolve();
+        });
+        return true;
+      }, false);
+
+      if (!didStart) {
         resolve();
-      });
+      }
     });
   }
 
@@ -651,62 +955,96 @@
 
   function bindBadgeClick() {
     document.addEventListener("click", async (event) => {
-      if (!isSupportedPage()) {
-        return;
-      }
+      await runSafelyAsync(async () => {
+        if (!isSupportedPage()) {
+          return;
+        }
 
-      const target = event.target;
-      if (!(target instanceof HTMLElement) || !target.classList.contains(BADGE_CLASS)) {
-        return;
-      }
+        const target = event.target;
+        if (!(target instanceof HTMLElement) || !target.classList.contains(BADGE_CLASS)) {
+          return;
+        }
 
-      event.preventDefault();
-      event.stopPropagation();
+        event.preventDefault();
+        event.stopPropagation();
 
-      const login = target.getAttribute(BADGE_LOGIN_ATTR) || "";
-      if (!login) {
-        return;
-      }
+        const login = target.getAttribute(BADGE_LOGIN_ATTR) || "";
+        if (!login) {
+          return;
+        }
 
-      const current = notes[login] || "";
-      const promptTitle = current ? t("promptEditRemark", [login]) : t("promptAddRemark", [login]);
-      const next = window.prompt(promptTitle, current);
-      if (next === null) {
-        return;
-      }
+        const current = notes[login] || "";
+        const promptTitle = current ? t("promptEditRemark", [login]) : t("promptAddRemark", [login]);
+        const next = window.prompt(promptTitle, current);
+        if (next === null) {
+          return;
+        }
 
-      await updateRemark(login, next);
+        await updateRemark(login, next);
+      });
     });
   }
 
   function bindStorageSync() {
-    chrome.storage.onChanged.addListener((changes, areaName) => {
-      if (areaName !== "sync") {
-        return;
+    storageChangeListener = (changes, areaName) => {
+      runSafely(() => {
+        if (areaName !== "sync") {
+          return;
+        }
+
+        if (changes.notes) {
+          notes = changes.notes.newValue || {};
+        }
+
+        if (changes.localeOverride) {
+          localeOverride = changes.localeOverride.newValue || "en";
+          void runSafelyAsync(async () => {
+            await refreshLocaleResources();
+            scheduleScan();
+          });
+          return;
+        }
+
+        scheduleScan();
+      });
+    };
+
+    safeChromeCall(() => {
+      chrome.storage.onChanged.addListener(storageChangeListener);
+    });
+  }
+
+  function isInjectedBadgeNode(node) {
+    return Boolean(node instanceof HTMLElement && node.classList.contains(BADGE_CLASS));
+  }
+
+  function shouldIgnoreMutations(records) {
+    return records.every((record) => {
+      if (record.type === "attributes") {
+        return isInjectedBadgeNode(record.target);
       }
 
-      if (changes.notes) {
-        notes = changes.notes.newValue || {};
+      if (record.type !== "childList") {
+        return false;
       }
 
-      if (changes.localeOverride) {
-        localeOverride = changes.localeOverride.newValue || "en";
-        void refreshLocaleResources().then(() => {
-          scheduleScan();
-        });
-        return;
-      }
-
-      scheduleScan();
+      const changedNodes = [...record.addedNodes, ...record.removedNodes];
+      return changedNodes.length > 0 && changedNodes.every((node) => isInjectedBadgeNode(node));
     });
   }
 
   function bindMutationObserver() {
-    const observer = new MutationObserver(() => {
-      scheduleScan();
+    mutationObserver = new MutationObserver((records) => {
+      runSafely(() => {
+        if (!extensionContextValid || shouldIgnoreMutations(records)) {
+          return;
+        }
+
+        scheduleScan();
+      });
     });
 
-    observer.observe(document.documentElement, {
+    mutationObserver.observe(document.documentElement, {
       childList: true,
       subtree: true,
       characterData: true,
@@ -726,23 +1064,32 @@
   }
 
   async function init() {
-    if (!isSupportedPage()) {
-      cleanupInjectedBadges();
-      return;
-    }
+    await runSafelyAsync(async () => {
+      if (!extensionContextValid || !isSupportedPage()) {
+        cleanupInjectedBadges();
+        return;
+      }
 
-    const preference = await new Promise((resolve) => {
-      chrome.storage.sync.get({ localeOverride: "en" }, (result) => {
-        resolve(result.localeOverride || "en");
+      const preference = await new Promise((resolve) => {
+        const didStart = safeChromeCall(() => {
+          chrome.storage.sync.get({ localeOverride: "en" }, (result) => {
+            resolve(result.localeOverride || "en");
+          });
+          return true;
+        }, false);
+
+        if (!didStart) {
+          resolve("en");
+        }
       });
+      localeOverride = preference;
+      await refreshLocaleResources();
+      notes = await getAllNotes();
+      bindBadgeClick();
+      bindStorageSync();
+      bindMutationObserver();
+      scheduleScan();
     });
-    localeOverride = preference;
-    await refreshLocaleResources();
-    notes = await getAllNotes();
-    bindBadgeClick();
-    bindStorageSync();
-    bindMutationObserver();
-    scheduleScan();
   }
 
   init();
