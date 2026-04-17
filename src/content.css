@@ -1,36 +1,49 @@
 .gh-remark-badge {
-  display: inline;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   max-width: 220px;
   margin-left: 6px;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: #24292f;
+  padding: 1px 8px;
+  border: 1px solid var(--borderColor-accent-muted, rgba(9, 105, 218, 0.22));
+  border-radius: 999px;
+  background: var(--bgColor-accent-muted, rgba(9, 105, 218, 0.1));
+  color: var(--fgColor-accent, #0969da);
   font-family: inherit;
   font-size: 11px;
-  font-weight: 700;
-  line-height: 1.4;
+  font-weight: 600;
+  line-height: 1.5;
   cursor: pointer;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  vertical-align: middle;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.gh-remark-badge:hover {
+  border-color: var(--borderColor-accent-emphasis, rgba(9, 105, 218, 0.4));
+  background: var(--control-transparent-bgColor-hover, rgba(177, 186, 196, 0.12));
+  color: var(--fgColor-default, #24292f);
 }
 
 .gh-remark-badge.gh-remark-badge--empty {
-  display: inline-flex;
-  align-items: center;
   margin-left: 8px;
-  padding: 1px 6px;
-  border: 1px dashed #8c959f;
-  border-radius: 999px;
-  background: #ffffff;
-  color: #57606a;
+  padding: 1px 7px;
+  border-style: dashed;
+  border-color: var(--borderColor-default, #8c959f);
+  background: transparent;
+  color: var(--fgColor-muted, #57606a);
   font-size: 10px;
   font-weight: 600;
 }
 
 .gh-remark-badge.gh-remark-badge--empty:hover {
-  background: #f6f8fa;
+  background: var(--control-transparent-bgColor-hover, rgba(177, 186, 196, 0.12));
+  color: var(--fgColor-default, #24292f);
 }
 
 [role="option"] .prc-ActionList-ItemDescriptionWrap-ujC8S {

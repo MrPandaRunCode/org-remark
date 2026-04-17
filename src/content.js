@@ -828,7 +828,7 @@
     }
 
     badge.classList.remove(BADGE_EMPTY_CLASS);
-    badge.textContent = `(${remark})`;
+    badge.textContent = remark;
     badge.title = t("badgeEditTitle", [login]);
     applyTitle(node, login, remark);
   }
