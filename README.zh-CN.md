@@ -18,8 +18,7 @@
 1. 打开 Chrome：`chrome://extensions`
 2. 开启右上角“开发者模式”
 3. 点击“加载已解压的扩展程序”
-4. 选择当前目录：
-`/Users/apple/Dev/JXCQ/github-remark`
+4. 选择包含 `manifest.json` 的项目根目录
 
 ## 使用方法
 

@@ -18,8 +18,7 @@ The content script observes DOM updates, so it also works with GitHub's dynamic 
 1. Open Chrome: `chrome://extensions`
 2. Enable **Developer mode**
 3. Click **Load unpacked**
-4. Select this directory:
-`/Users/apple/Dev/JXCQ/github-remark`
+4. Select the project root directory containing `manifest.json`
 
 ## Usage
 
