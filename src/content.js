@@ -53,6 +53,8 @@
     "a[href]",
     "img[alt^='@']",
     "[aria-label*='@']",
+    "[class*='prc-ActionList-ItemLabel-']",
+    "[id$='--label']",
     "[class*='user-group-module__TextCell']",
     "[class*='text-cell-module__SanitizedHtml']",
     "[class*='sanitized-group-header-text-module__SanitizedHtml']",
@@ -362,6 +364,31 @@
     );
   }
 
+  function isActionListUserLabel(element) {
+    if (!(element instanceof HTMLElement)) {
+      return false;
+    }
+
+    const className = element.getAttribute("class") || "";
+    const elementId = element.id || "";
+    const isActionListLabel =
+      className.includes("prc-ActionList-ItemLabel-") ||
+      (elementId.endsWith("--label") && Boolean(element.closest("[class*='prc-ActionList-ActionListContent-']")));
+
+    if (!isActionListLabel || !isInUserListContext(element)) {
+      return false;
+    }
+
+    const actionListContent = element.closest(
+      "[class*='prc-ActionList-ActionListContent-'], .prc-ActionList-ActionListContent-KBb8-"
+    );
+    if (!(actionListContent instanceof HTMLElement)) {
+      return false;
+    }
+
+    return Boolean(actionListContent.querySelector("img[data-testid='github-avatar'], [data-testid='github-avatar']"));
+  }
+
   function extractLoginFromHovercardUrl(rawUrl) {
     if (!rawUrl) {
       return null;
@@ -434,6 +461,7 @@
 
     const className = element.getAttribute("class") || "";
     const isUserTextCell =
+      isActionListUserLabel(element) ||
       className.includes("user-group-module__TextCell") ||
       className.includes("text-cell-module__SanitizedHtml") ||
       className.includes("sanitized-group-header-text-module__SanitizedHtml") ||
